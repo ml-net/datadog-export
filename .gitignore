@@ -1,4 +1,4 @@
-.env
-*.json
-
+.env*
+localdata
 node_modules
+*.log
