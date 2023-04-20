@@ -63,36 +63,10 @@ The log's timestamp is the only attribute that is in all results, as first infor
 
 You are free to add whatever you want, using the `columns` attribute of the JSON payload of the command input; it's possible to define the `label` (how the information will be named in the file) and its `path` inside the Datadog logs, and optionally you can set a default value in case the information is not present in a single log entry (an empty string `""` as system default value).
 
-Here a sample log detail from Datadog
-
-![Datadog log detail](./datadog_log_details.png)
-
 The _root_ of log attributes is `attributes`, so (for example) the timestamp is referred as `attributes.timestamp`
 
 The `columns` input attribute is an array of tuples containing label, attribute's path and optional default value if the attribute isn't found.\
 The `path` must be written as a string, with an hashtag (`#`) as separator (come back to timestamp example, it should be added as `attributes#timestamp`)
-
-For example, if you want your data to be exported as CSV with this information 
-
-| Log's attribute  | CSV column name  | Default value  |
-| -- | -- | -- |
-| timestamp  | date  | |
-| tui.correlation_id | correlation_id | |
-| context.request.uri | URI | |
-| context.request.headers.x-musement-application | X-Musement-Application | N/D |
-
-you must use this JSON (remember, the `date` field is alwais present, then is not requested in column definition)
-
-```
-{
-    rest_of_JSON_input,
-    "columns": [
-        { "label": "correlation_id", "path": "attributes#tui#correlation_id" },
-        { "label": "URI", "path": "context#request#uri" },
-        { "label": "X-Musement-Application", "path": "context#request#headers#x-musement-application", "default": "N/D" }
-    ]
-}
-```
 
 ## Authentication
 
@@ -128,11 +102,11 @@ Copy `.env.example` to `.env.production` and add a valid data.
 
 `node index.js` to start the server (also a `npm start` does the job).
 
-Do you want to asking for all HTTP 500 errors on API calls on 27th March between 12 and 13 GMT, saving a CSV file, with `date, tui.correlation_id, context.request.uri, context.request.headers.x-musement-application` as output, with verbose logging to console? Type
+Do you want to asking for all HTTP 500 errors on `/api/*` calls on 27th March between 12 and 13 GMT, saving a CSV file, with `date, context.request.uri, context.request.headers.x-myown-header` as output, with verbose logging to console? Type
 
 ```
 curl -H "Content-type: application/json" -X POST "http://localhost:8080/export" \
--d'{"query":"@context.channel:nginx @context.request.uri:\/api\/v3\/* @http.status_code:500","verbose":true,"from":"2023-03-27T12:00:00.000Z","to":"2023-03-27T13:00:00.000Z","outputFormat":"csv","columns":[{"label":"correlation_id","path":"attributes#tui#correlation_id"},{"label":"URI","path":"attributes#context#request#uri"},{"label":"headers","path":"attributes#context#request#headers#x-musement-application"}]}'
+-d'{"query":"@context.request.uri:\/api\/* @http.status_code:500","verbose":true,"from":"2023-03-27T12:00:00.000Z","to":"2023-03-27T13:00:00.000Z","outputFormat":"csv","columns":[{"label":"URI","path":"attributes#context#request#uri"},{"label":"My Header","path":"attributes#context#request#headers#x-myown-header"}]}'
 ```
 
 You will get `http://localhost:8080/1680087684088_results.csv` as response, or something similar, the prefix is timestamp of request, used for cleaning archives after the limit of 36 hours.
